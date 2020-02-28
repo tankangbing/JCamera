@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jcamera_both_tips">轻触拍照，长按摄像</string>
+    <string name="jcamera_capture_only_tips">轻触拍照</string>
+    <string name="jcamera_recorder_only_tips">长按摄像</string>
+    <string name="jcamera_record_error">录制时间过短</string>
+    <dimen name="jcamera_vector_vas">24dp</dimen>
+    <dimen name="jcamera_16dp">16dp</dimen>
+</resources>
