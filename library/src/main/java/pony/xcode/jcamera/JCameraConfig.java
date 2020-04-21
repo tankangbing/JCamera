@@ -1,39 +1,51 @@
 package pony.xcode.jcamera;
 
 public class JCameraConfig {
+    static final int DURATION_MIN = 1500;  //默认最小录制时长
+    static final int DURATION_MAX = 15 * 1000; //默认最大录制时长
+    static final int QUALITY = JCameraView.MEDIA_QUALITY_HIGH; //默认拍摄质量
+    static final int FEATURES = JCameraView.BUTTON_STATE_BOTH; //默认模式-点击拍照长按摄像
+
     private String savePath; //保存的路径
     private int mediaQuality; //录制质量
     private int features; //设置CaptureButton功能（拍照和录像）
-    private int duration; //设置录制时间
+    private int minDuration; //最小录制时间
+    private int maxDuration; //设置录制时间
 
     private JCameraConfig(Builder builder) {
         this.savePath = builder.savePath;
         this.mediaQuality = builder.mediaQuality;
         this.features = builder.features;
-        this.duration = builder.duration;
+        this.minDuration = builder.minDuration;
+        this.maxDuration = builder.maxDuration;
     }
 
-    public String getSavePath() {
+    String getSavePath() {
         return savePath;
     }
 
-    public int getMediaQuality() {
+    int getMediaQuality() {
         return mediaQuality;
     }
 
-    public int getFeatures() {
+    int getFeatures() {
         return features;
     }
 
-    public int getDuration() {
-        return duration;
+    int getMinDuration() {
+        return minDuration;
+    }
+
+    int getMaxDuration() {
+        return maxDuration;
     }
 
     public static class Builder {
         private String savePath; //保存的路径
         private int mediaQuality = JCameraView.MEDIA_QUALITY_HIGH; //录制质量
         private int features; //设置CaptureButton功能（拍照和录像）
-        private int duration; //设置录制时间
+        private int minDuration; //设置最小录制时间
+        private int maxDuration; //设置录制时间
 
         public Builder setPath(String savePath) {
             this.savePath = savePath;
@@ -50,8 +62,13 @@ public class JCameraConfig {
             return this;
         }
 
-        public Builder setDuration(int duration) {
-            this.duration = duration;
+        public Builder setMinDuration(int minDuration) {
+            this.minDuration = minDuration;
+            return this;
+        }
+
+        public Builder setMaxDuration(int maxDuration) {
+            this.maxDuration = maxDuration;
             return this;
         }
 

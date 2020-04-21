@@ -46,7 +46,8 @@ public class JCameraActivity extends AppCompatActivity implements JCameraListene
             intent.putExtra("path", config.getSavePath());
             intent.putExtra("quality", config.getMediaQuality());
             intent.putExtra("features", config.getFeatures());
-            intent.putExtra("duration", config.getDuration());
+            intent.putExtra("minDuration", config.getMinDuration());
+            intent.putExtra("maxDuration", config.getMaxDuration());
         }
         return intent;
     }
@@ -68,15 +69,17 @@ public class JCameraActivity extends AppCompatActivity implements JCameraListene
             path = FileUtil.generatePath(this);
         }
         mJCameraView.setSaveVideoPath(path);
-        int mediaQuality = intent.getIntExtra("quality", JCameraView.MEDIA_QUALITY_HIGH);
+        int mediaQuality = intent.getIntExtra("quality", JCameraConfig.QUALITY);
         if (mediaQuality <= 0) {
             mediaQuality = JCameraView.MEDIA_QUALITY_HIGH;
         }
         mJCameraView.setMediaQuality(mediaQuality);
-        final int features = intent.getIntExtra("features", JCameraView.BUTTON_STATE_BOTH);
+        final int features = intent.getIntExtra("features", JCameraConfig.FEATURES);
         mJCameraView.setFeatures(features);
-        final int duration = intent.getIntExtra("duration", 15 * 1000);
-        mJCameraView.setDuration(duration);
+        final int minDuration = intent.getIntExtra("minDuration",JCameraConfig.DURATION_MIN);
+        mJCameraView.setMinDuration(minDuration);
+        final int maxDuration = intent.getIntExtra("maxDuration", JCameraConfig.DURATION_MAX);
+        mJCameraView.setMaxDuration(maxDuration);
         mJCameraView.setJCameraListener(this);
         mJCameraView.setLeftClickListener(new ClickListener() {
             @Override

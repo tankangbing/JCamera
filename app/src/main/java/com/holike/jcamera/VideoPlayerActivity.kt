@@ -8,10 +8,7 @@ import kotlinx.android.synthetic.main.activity_videoplayer.*
 class VideoPlayerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-        )
+        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
         setContentView(R.layout.activity_videoplayer)
         val videoPath = intent.getStringExtra("videoPath")
         videoView.setVideoPath(videoPath)

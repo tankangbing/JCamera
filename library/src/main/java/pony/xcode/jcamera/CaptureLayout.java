@@ -24,7 +24,7 @@ public class CaptureLayout extends FrameLayout {
 
     private CaptureListener captureListener;    //拍照按钮监听
     private TypeListener typeListener;          //拍照或录制后接结果按钮监听
-//    private ReturnListener returnListener;      //退出按钮监听
+    //    private ReturnListener returnListener;      //退出按钮监听
     private ClickListener leftClickListener;    //左边按钮监听
     private ClickListener rightClickListener;   //右边按钮监听
 
@@ -110,8 +110,8 @@ public class CaptureLayout extends FrameLayout {
         btn_confirm.setVisibility(VISIBLE);
         btn_cancel.setClickable(false);
         btn_confirm.setClickable(false);
-        ObjectAnimator animator_cancel = ObjectAnimator.ofFloat(btn_cancel, "translationX", layout_width / 4, 0);
-        ObjectAnimator animator_confirm = ObjectAnimator.ofFloat(btn_confirm, "translationX", -layout_width / 4, 0);
+        ObjectAnimator animator_cancel = ObjectAnimator.ofFloat(btn_cancel, "translationX", layout_width / 4f, 0);
+        ObjectAnimator animator_confirm = ObjectAnimator.ofFloat(btn_confirm, "translationX", -layout_width / 4f, 0);
 
         AnimatorSet set = new AnimatorSet();
         set.playTogether(animator_cancel, animator_confirm);
@@ -313,15 +313,19 @@ public class CaptureLayout extends FrameLayout {
         animator_txt_tip.start();
     }
 
-    public void setDuration(int duration) {
-        btn_capture.setDuration(duration);
+    public void setMinDuration(int minDuration) {
+        btn_capture.setMinDuration(minDuration);
+    }
+
+    public void setMaxDuration(int maxDuration) {
+        btn_capture.setMaxDuration(maxDuration);
     }
 
     public void setButtonFeatures(int state) {
         btn_capture.setButtonFeatures(state);
-        if(state == JCameraView.BUTTON_STATE_ONLY_RECORDER){
+        if (state == JCameraView.BUTTON_STATE_ONLY_RECORDER) {
             setTip(getContext().getString(R.string.jcamera_recorder_only_tips));
-        } else if(state == JCameraView.BUTTON_STATE_ONLY_CAPTURE){
+        } else if (state == JCameraView.BUTTON_STATE_ONLY_CAPTURE) {
             setTip(getContext().getString(R.string.jcamera_capture_only_tips));
         } else {
             setTip(getContext().getString(R.string.jcamera_both_tips));

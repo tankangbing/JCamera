@@ -53,9 +53,9 @@ public class CaptureButton extends View {
     private int button_size;                //按钮大小
 
     private float progress;         //录制视频的进度
-    private int duration;           //录制视频最大时间长度
-    private int min_duration;       //最短录制时间限制
-    private int recorded_time;      //记录当前录制的时间
+    private int maxDuration;           //录制视频最大时间长度
+    private int minDuration;       //最短录制时间限制
+    private int recordedTime;      //记录当前录制的时间
 
     private RectF rectF;
 
@@ -75,7 +75,7 @@ public class CaptureButton extends View {
         button_outside_radius = button_radius;
         button_inside_radius = button_radius * 0.75f;
 
-        strokeWidth = size / 15;
+        strokeWidth = size / 15f;
         outside_add_size = size / 5;
         inside_reduce_size = size / 8;
 
@@ -88,12 +88,12 @@ public class CaptureButton extends View {
         state = STATE_IDLE;                //初始化为空闲状态
         button_state = JCameraView.BUTTON_STATE_BOTH;  //初始化按钮为可录制可拍照
         LogUtil.i("CaptureButton start");
-        duration = 10 * 1000;              //默认最长录制时间为10s
+        maxDuration = JCameraConfig.DURATION_MAX;              //默认最长录制时间为10s
         LogUtil.i("CaptureButton end");
-        min_duration = 1500;              //默认最短录制时间为1.5s
+        minDuration = JCameraConfig.DURATION_MIN;              //默认最短录制时间为1.5s
 
-        center_X = (button_size + outside_add_size * 2) / 2;
-        center_Y = (button_size + outside_add_size * 2) / 2;
+        center_X = (button_size + outside_add_size * 2) / 2f;
+        center_Y = (button_size + outside_add_size * 2) / 2f;
 
         rectF = new RectF(
                 center_X - (button_radius + outside_add_size - strokeWidth / 2),
@@ -101,7 +101,7 @@ public class CaptureButton extends View {
                 center_X + (button_radius + outside_add_size - strokeWidth / 2),
                 center_Y + (button_radius + outside_add_size - strokeWidth / 2));
 
-        timer = new RecordCountDownTimer(duration, duration / 360);    //录制定时器
+        timer = new RecordCountDownTimer(maxDuration, maxDuration / 360);    //录制定时器
     }
 
     @Override
@@ -187,10 +187,10 @@ public class CaptureButton extends View {
     //录制结束
     private void recordEnd() {
         if (captureLisenter != null) {
-            if (recorded_time < min_duration)
-                captureLisenter.recordShort(recorded_time);//回调录制时间过短
+            if (recordedTime < minDuration)
+                captureLisenter.recordShort(recordedTime);//回调录制时间过短
             else
-                captureLisenter.recordEnd(recorded_time);  //回调录制结束
+                captureLisenter.recordEnd(recordedTime);  //回调录制结束
         }
         resetRecordAnim();  //重制按钮状态
     }
@@ -275,8 +275,8 @@ public class CaptureButton extends View {
 
     //更新进度条
     private void updateProgress(long millisUntilFinished) {
-        recorded_time = (int) (duration - millisUntilFinished);
-        progress = 360f - millisUntilFinished / (float) duration * 360f;
+        recordedTime = (int) (maxDuration - millisUntilFinished);
+        progress = 360f - millisUntilFinished / (float) maxDuration * 360f;
         invalidate();
     }
 
@@ -326,14 +326,14 @@ public class CaptureButton extends View {
      **************************************************/
 
     //设置最长录制时间
-    public void setDuration(int duration) {
-        this.duration = duration;
+    public void setMaxDuration(int duration) {
+        this.maxDuration = duration;
         timer = new RecordCountDownTimer(duration, duration / 360);    //录制定时器
     }
 
     //设置最短录制时间
     public void setMinDuration(int duration) {
-        this.min_duration = duration;
+        this.minDuration = duration;
     }
 
     //设置回调接口

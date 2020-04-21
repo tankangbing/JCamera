@@ -97,7 +97,8 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
     private int iconSrc;        //图标资源
     private int iconLeft;       //左图标
     private int iconRight;      //右图标
-    private int duration;       //录制时间
+    private int minDuration;  //最小录制时长
+    private int maxDuration;       //录制时间
 
     //缩放梯度
     private int zoomGradient = 0;
@@ -125,7 +126,8 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
         iconSrc = a.getResourceId(R.styleable.JCameraView_iconSrc, R.drawable.ic_camera);
         iconLeft = a.getResourceId(R.styleable.JCameraView_iconLeft, 0);
         iconRight = a.getResourceId(R.styleable.JCameraView_iconRight, 0);
-        duration = a.getInteger(R.styleable.JCameraView_duration_max, 10 * 1000);       //没设置默认为10s
+        minDuration = a.getInteger(R.styleable.JCameraView_duration_min, JCameraConfig.DURATION_MIN); //没设置默认1.5s
+        maxDuration = a.getInteger(R.styleable.JCameraView_duration_max, JCameraConfig.DURATION_MAX);       //没设置默认为10s
         a.recycle();
         initData();
         initView();
@@ -158,7 +160,8 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
             }
         });
         mCaptureLayout = view.findViewById(R.id.capture_layout);
-        mCaptureLayout.setDuration(duration);
+        mCaptureLayout.setMinDuration(minDuration);
+        mCaptureLayout.setMaxDuration(maxDuration);
         mCaptureLayout.setIconSrc(iconLeft, iconRight);
         mFocusView = view.findViewById(R.id.focus_view);
         mVideoView.getHolder().addCallback(this);
@@ -211,8 +214,8 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
 
             @Override
             public void recordError() {
-                if (errorLisenter != null) {
-                    errorLisenter.AudioPermissionError();
+                if (errorListener != null) {
+                    errorListener.AudioPermissionError();
                 }
             }
         });
@@ -381,6 +384,22 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
     /**************************************************
      * 对外提供的API                     *
      **************************************************/
+    public void setMinDuration(int minDuration) {
+        this.minDuration = minDuration;
+    }
+
+    public void setMaxDuration(int maxDuration) {
+        this.maxDuration = maxDuration;
+    }
+
+    public void setLeftClickListener(ClickListener clickListener) {
+        this.leftClickListener = clickListener;
+    }
+
+    public void setRightClickListener(ClickListener clickListener) {
+        this.rightClickListener = clickListener;
+    }
+
     public void setSaveVideoPath(String path) {
         CameraInterface.getInstance().setSaveVideoPath(path);
     }
@@ -389,11 +408,11 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
         this.jCameraListener = jCameraListener;
     }
 
-    private ErrorListener errorLisenter;
+    private ErrorListener errorListener;
 
     //启动Camera错误回调
     public void setErrorListener(ErrorListener errorListener) {
-        this.errorLisenter = errorListener;
+        this.errorListener = errorListener;
         CameraInterface.getInstance().setErrorListener(errorListener);
     }
 
@@ -449,7 +468,6 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
                 }
                 break;
             case TYPE_SHORT:
-                break;
             case TYPE_DEFAULT:
                 break;
         }
@@ -540,16 +558,16 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
         }
         mFocusView.setVisibility(VISIBLE);
         if (x < mFocusView.getWidth() / 2f) {
-            x = mFocusView.getWidth() / 2;
+            x = mFocusView.getWidth() / 2f;
         }
         if (x > layout_width - mFocusView.getWidth() / 2f) {
-            x = layout_width - mFocusView.getWidth() / 2;
+            x = layout_width - mFocusView.getWidth() / 2f;
         }
         if (y < mFocusView.getWidth() / 2f) {
-            y = mFocusView.getWidth() / 2;
+            y = mFocusView.getWidth() / 2f;
         }
         if (y > mCaptureLayout.getTop() - mFocusView.getWidth() / 2f) {
-            y = mCaptureLayout.getTop() - mFocusView.getWidth() / 2;
+            y = mCaptureLayout.getTop() - mFocusView.getWidth() / 2f;
         }
         mFocusView.setX(x - mFocusView.getWidth() / 2f);
         mFocusView.setY(y - mFocusView.getHeight() / 2f);
@@ -563,17 +581,6 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
         return true;
     }
 
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
-
-    public void setLeftClickListener(ClickListener clickListener) {
-        this.leftClickListener = clickListener;
-    }
-
-    public void setRightClickListener(ClickListener clickListener) {
-        this.rightClickListener = clickListener;
-    }
 
     private void setFlashRes() {
         switch (type_flash) {

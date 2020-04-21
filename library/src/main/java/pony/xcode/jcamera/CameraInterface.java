@@ -734,10 +734,7 @@ public class CameraInterface implements Camera.PreviewCallback {
         if (x > max) {
             return max;
         }
-        if (x < min) {
-            return min;
-        }
-        return x;
+        return Math.max(x, min);
     }
 
     void setErrorListener(ErrorListener errorListener) {
