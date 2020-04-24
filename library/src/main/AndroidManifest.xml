@@ -2,11 +2,12 @@
     package="pony.xcode.jcamera">
     <!--//调用相机权限-->
     <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <!--录音权限-->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application>
         <activity android:name=".JCameraActivity" />

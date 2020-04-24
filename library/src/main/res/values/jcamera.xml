@@ -1,9 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="jcamera_both_tips">轻触拍照，长按摄像</string>
-    <string name="jcamera_capture_only_tips">轻触拍照</string>
-    <string name="jcamera_recorder_only_tips">长按摄像</string>
-    <string name="jcamera_record_error">录制时间过短</string>
-    <dimen name="jcamera_vector_vas">24dp</dimen>
-    <dimen name="jcamera_16dp">16dp</dimen>
+    <!--Customize your theme-->
+    <style name="JCameraTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="jc_progress_color">@color/jc_progress_col</item>
+        <item name="jc_outside_color">@color/jc_outside_col</item>
+        <item name="jc_inside_color">@color/jc_inside_col</item>
+        <item name="jc_cancel_background">@color/jc_cancel_background</item>
+        <item name="jc_cancel_icon_color">@color/jc_cancel_icon_col</item>
+        <item name="jc_confirm_background">@color/jc_confirm_background</item>
+        <item name="jc_confirm_icon_color">@color/jc_confirm_icon_col</item>
+    </style>
+
+    <attr name="jc_iconSrc" format="reference" />
+    <attr name="jc_iconLeft" format="reference" />
+    <attr name="jc_iconRight" format="reference" />
+    <attr name="jc_duration_min" format="integer" />
+    <attr name="jc_duration_max" format="integer" />
+
+    <!--CaptureButton style-->
+    <attr name="jc_progress_color" format="color" />
+    <attr name="jc_outside_color" format="color" />
+    <attr name="jc_inside_color" format="color" />
+
+    <!--TypeButton style-->
+    <attr name="jc_type_buttonSize" format="dimension" />
+    <attr name="jc_type_strokeWidth" format="dimension" />
+    <attr name="jc_cancel_background" format="color" />
+    <attr name="jc_cancel_icon_color" format="color" />
+    <attr name="jc_confirm_background" format="color" />
+    <attr name="jc_confirm_icon_color" format="color" />
+
+    <!--ReturnButton style-->
+    <attr name="jc_backtrack_color" format="color" />
+    <attr name="jc_backtrack_line_width" format="dimension" />
+    <attr name="jc_backtrack_size" format="dimension" />
+
+    <!--FocusView style-->
+    <attr name="jc_focus_size" format="dimension" />
+    <attr name="jc_focus_color" format="color" />
+    <attr name="jc_focus_width" format="dimension" />
+
+    <!--Tips TextView style-->
+    <attr name="jc_tips_textColor" format="reference" />
+    <attr name="jc_tips_textSize" format="dimension" />
+    <attr name="jc_tips_both_text" format="string" />
+    <attr name="jc_tips_capture_text" format="string" />
+    <attr name="jc_tips_recorder_text" format="string" />
+    <attr name="jc_tips_record_short" format="string" />
+
+    <attr name="jc_vector_icon_size" format="dimension" />
+
+    <declare-styleable name="JCameraView">
+        <attr name="jc_iconSrc" />
+        <attr name="jc_iconLeft" />
+        <attr name="jc_iconRight" />
+        <attr name="jc_duration_min" />
+        <attr name="jc_duration_max" />
+    </declare-styleable>
+
+    <!--default color-->
+    <color name="jc_progress_col">#EE16AE16</color>
+    <color name="jc_outside_col">#EEDCDCDC</color>
+    <color name="jc_inside_col">#FFFFFFFF</color>
+    <color name="jc_cancel_background">#EEDCDCDC</color>
+    <color name="jc_cancel_icon_col">#FF000000</color>
+    <color name="jc_confirm_background">#FFFFFFFF</color>
+    <color name="jc_confirm_icon_col">#FF00CC00</color>
+    <color name="jc_backtrack_color">#FFFFFFFF</color>
+
+    <string name="jcamera_dialog_title">温馨提示</string>
+    <string name="jcamera_permissions_dismiss">授权失败，无法使用相机或录音</string>
+    <string name="jcamera_permissions_forbid">相机或录音权限已被禁止，请手动打开</string>
+    <string name="jcamera_error">启用相机失败</string>
+    <string name="jcamera_close">关闭</string>
+    <string name="jcamera_cancel">取消</string>
+    <string name="jcamera_open">打开</string>
 </resources>

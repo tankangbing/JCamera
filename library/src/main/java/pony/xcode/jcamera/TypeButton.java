@@ -1,12 +1,15 @@
 package pony.xcode.jcamera;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.util.TypedValue;
 import android.view.View;
+
+import androidx.core.content.ContextCompat;
 
 /**
  * 描    述：拍照或录制完成后弹出的确认和返回按钮
@@ -14,19 +17,24 @@ import android.view.View;
 public class TypeButton extends View {
     public static final int TYPE_CANCEL = 0x001;
     public static final int TYPE_CONFIRM = 0x002;
-    private int button_type;
-    private int button_size;
+    private int mButtonType;
+    private int mButtonSize;
 
-    private float center_X;
-    private float center_Y;
-    private float button_radius;
+    private float mCenterX;
+    private float mCenterY;
+    private float mButtonRadius;
 
     private Paint mPaint;
-    private Path path;
-    private float strokeWidth;
+    private Path mPath;
+    private float mStrokeWidth;
 
-    private float index;
-    private RectF rectF;
+    private float mIndex;
+    private RectF mRectF;
+
+    private int mCancelBackground = JCameraConfig.CANCEL_BACKGROUND;
+    private int mCancelIconColor = JCameraConfig.CANCEL_ICON_COLOR;
+    private int mConfirmBackground = JCameraConfig.CONFIRM_BACKGROUND;
+    private int mConfirmIconColor = JCameraConfig.CONFIRM_ICON_COLOR;
 
     public TypeButton(Context context) {
         super(context);
@@ -34,71 +42,95 @@ public class TypeButton extends View {
 
     public TypeButton(Context context, int type, int size) {
         super(context);
-        this.button_type = type;
-        button_size = size;
-        button_radius = size / 2.0f;
-        center_X = size / 2.0f;
-        center_Y = size / 2.0f;
+        this.mButtonType = type;
+        this.mButtonSize = size;
+        this.mStrokeWidth = mButtonSize / 50f;
+        Resources.Theme theme = context.getTheme();
+        if (theme != null) {
+            TypedValue typedValue = new TypedValue();
+            if (theme.resolveAttribute(R.attr.jc_type_buttonSize, typedValue, true)) {
+                this.mButtonSize = context.getResources().getDimensionPixelSize(typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_type_strokeWidth, typedValue, true)) {
+                this.mStrokeWidth = context.getResources().getDimensionPixelSize(typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_cancel_background, typedValue, true)) {
+                mCancelBackground = ContextCompat.getColor(context, typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_cancel_icon_color, typedValue, true)) {
+                mCancelIconColor = ContextCompat.getColor(context, typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_confirm_background, typedValue, true)) {
+                mConfirmBackground = ContextCompat.getColor(context, typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_confirm_icon_color, typedValue, true)) {
+                mConfirmIconColor = ContextCompat.getColor(context, typedValue.resourceId);
+            }
+        }
+
+        mButtonRadius = mButtonSize / 2.0f;
+        mCenterX = mButtonSize / 2.0f;
+        mCenterY = mButtonSize / 2.0f;
 
         mPaint = new Paint();
-        path = new Path();
-        strokeWidth = size / 50f;
-        index = button_size / 12f;
-        rectF = new RectF(center_X, center_Y - index, center_X + index * 2, center_Y + index);
+        mPath = new Path();
+
+        mIndex = mButtonSize / 12f;
+        mRectF = new RectF(mCenterX, mCenterY - mIndex, mCenterX + mIndex * 2, mCenterY + mIndex);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(button_size, button_size);
+        setMeasuredDimension(mButtonSize, mButtonSize);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         //如果类型为取消，则绘制内部为返回箭头
-        if (button_type == TYPE_CANCEL) {
+        if (mButtonType == TYPE_CANCEL) {
             mPaint.setAntiAlias(true);
-            mPaint.setColor(0xEEDCDCDC);
+            mPaint.setColor(mCancelBackground);
             mPaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(center_X, center_Y, button_radius, mPaint);
+            canvas.drawCircle(mCenterX, mCenterY, mButtonRadius, mPaint);
 
-            mPaint.setColor(Color.BLACK);
+            mPaint.setColor(mCancelIconColor);
             mPaint.setStyle(Paint.Style.STROKE);
-            mPaint.setStrokeWidth(strokeWidth);
+            mPaint.setStrokeWidth(mStrokeWidth);
 
-            path.moveTo(center_X - index / 7, center_Y + index);
-            path.lineTo(center_X + index, center_Y + index);
+            mPath.moveTo(mCenterX - mIndex / 7, mCenterY + mIndex);
+            mPath.lineTo(mCenterX + mIndex, mCenterY + mIndex);
 
-            path.arcTo(rectF, 90, -180);
-            path.lineTo(center_X - index, center_Y - index);
-            canvas.drawPath(path, mPaint);
+            mPath.arcTo(mRectF, 90, -180);
+            mPath.lineTo(mCenterX - mIndex, mCenterY - mIndex);
+            canvas.drawPath(mPath, mPaint);
             mPaint.setStyle(Paint.Style.FILL);
-            path.reset();
-            path.moveTo(center_X - index, (float) (center_Y - index * 1.5));
-            path.lineTo(center_X - index, (float) (center_Y - index / 2.3));
-            path.lineTo((float) (center_X - index * 1.6), center_Y - index);
-            path.close();
-            canvas.drawPath(path, mPaint);
+            mPath.reset();
+            mPath.moveTo(mCenterX - mIndex, (float) (mCenterY - mIndex * 1.5));
+            mPath.lineTo(mCenterX - mIndex, (float) (mCenterY - mIndex / 2.3));
+            mPath.lineTo((float) (mCenterX - mIndex * 1.6), mCenterY - mIndex);
+            mPath.close();
+            canvas.drawPath(mPath, mPaint);
 
         }
         //如果类型为确认，则绘制绿色勾
-        if (button_type == TYPE_CONFIRM) {
+        if (mButtonType == TYPE_CONFIRM) {
             mPaint.setAntiAlias(true);
-            mPaint.setColor(0xFFFFFFFF);
+            mPaint.setColor(mConfirmBackground);
             mPaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(center_X, center_Y, button_radius, mPaint);
+            canvas.drawCircle(mCenterX, mCenterY, mButtonRadius, mPaint);
             mPaint.setAntiAlias(true);
             mPaint.setStyle(Paint.Style.STROKE);
-            mPaint.setColor(0xFF00CC00);
-            mPaint.setStrokeWidth(strokeWidth);
+            mPaint.setColor(mConfirmIconColor);
+            mPaint.setStrokeWidth(mStrokeWidth);
 
-            path.moveTo(center_X - button_size / 6f, center_Y);
-            path.lineTo(center_X - button_size / 21.2f, center_Y + button_size / 7.7f);
-            path.lineTo(center_X + button_size / 4.0f, center_Y - button_size / 8.5f);
-            path.lineTo(center_X - button_size / 21.2f, center_Y + button_size / 9.4f);
-            path.close();
-            canvas.drawPath(path, mPaint);
+            mPath.moveTo(mCenterX - mButtonSize / 6f, mCenterY);
+            mPath.lineTo(mCenterX - mButtonSize / 21.2f, mCenterY + mButtonSize / 7.7f);
+            mPath.lineTo(mCenterX + mButtonSize / 4.0f, mCenterY - mButtonSize / 8.5f);
+            mPath.lineTo(mCenterX - mButtonSize / 21.2f, mCenterY + mButtonSize / 9.4f);
+            mPath.close();
+            canvas.drawPath(mPath, mPaint);
         }
     }
 }

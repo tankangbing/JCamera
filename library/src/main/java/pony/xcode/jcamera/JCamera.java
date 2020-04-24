@@ -5,8 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StyleRes;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -15,6 +17,50 @@ public class JCamera {
     public static final String CAPTURE_EXTRA = "capture-extra"; //拍照返回
     public static final String RECORD_VIDEO_EXTRA = "record-video-extra"; //录制视频返回的路径
     public static final String RECORD_FRAME_EXTRA = "record-frame-extra";  //录制的视频第一帧图片路径
+    private Activity mActivity;
+    private Fragment mFragment;
+    private int mThemeId;
+    private JCameraConfig mConfig;
+    private int mRequestCode = 999;
+
+    private JCamera(Activity activity) {
+        this.mActivity = activity;
+    }
+
+    private JCamera(Fragment fragment) {
+        this.mFragment = fragment;
+    }
+
+    public static JCamera with(Activity activity) {
+        return new JCamera(activity);
+    }
+
+    public static JCamera with(Fragment fragment) {
+        return new JCamera(fragment);
+    }
+
+    public JCamera themeId(@StyleRes int themeId) {
+        this.mThemeId = themeId;
+        return this;
+    }
+
+    public JCamera config(@Nullable JCameraConfig config) {
+        this.mConfig = config;
+        return this;
+    }
+
+    public JCamera requestCode(@IntRange(from = 0, to = 65536) int requestCode) {
+        this.mRequestCode = requestCode;
+        return this;
+    }
+
+    public void start() {
+        if (mActivity != null) {
+            JCameraActivity.startCamera(mActivity, mThemeId, mConfig, mRequestCode);
+        } else {
+            JCameraActivity.startCamera(mFragment, mThemeId, mConfig, mRequestCode);
+        }
+    }
 
     //录制视频要申请相机和录音的权限
     public static boolean areJCameraEnabled(@NonNull Context context) {

@@ -14,6 +14,7 @@ public class CheckPermission {
     /**
      * 用于检测是否具有录音权限
      */
+    @Deprecated
     public static int getRecordState() {
         int minBuffer = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat
                 .ENCODING_PCM_16BIT);
@@ -64,7 +65,6 @@ public class CheckPermission {
             Camera.Parameters mParameters = mCamera.getParameters();
             mCamera.setParameters(mParameters);
         } catch (Exception e) {
-            e.printStackTrace();
             canUse = false;
         } finally {
             if (mCamera != null) {

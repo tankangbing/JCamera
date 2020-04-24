@@ -18,7 +18,6 @@ import android.hardware.SensorManager;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.widget.ImageView;
@@ -42,8 +41,6 @@ import pony.xcode.jcamera.util.ScreenUtils;
 
 public class CameraInterface implements Camera.PreviewCallback {
 
-    private static final String TAG = "CJT";
-
     private volatile static CameraInterface mCameraInterface;
 
     public static void destroyCameraInterface() {
@@ -63,7 +60,7 @@ public class CameraInterface implements Camera.PreviewCallback {
     private float screenProp = -1.0f;
 
     private boolean isRecorder = false;
-    private MediaRecorder mediaRecorder;
+    private MediaRecorder mMediaRecorder;
     private String videoFileName;
     private String saveVideoPath;
     private String videoFileAbsPath;
@@ -82,8 +79,8 @@ public class CameraInterface implements Camera.PreviewCallback {
     private int rotation = 0;
     private byte[] firstFrame_data;
 
-    public static final int TYPE_RECORDER = 0x090;
-    public static final int TYPE_CAPTURE = 0x091;
+    static final int TYPE_RECORDER = 0x090;
+    static final int TYPE_CAPTURE = 0x091;
     private int nowScaleRate = 0;
     private int recordScaleRate = 0;
 
@@ -139,20 +136,6 @@ public class CameraInterface implements Camera.PreviewCallback {
 
         }
     }
-
-//    private SensorEventListener sensorEventListener = new SensorEventListener() {
-//        public void onSensorChanged(SensorEvent event) {
-//            if (Sensor.TYPE_ACCELEROMETER != event.sensor.getType()) {
-//                return;
-//            }
-//            float[] values = event.values;
-//            angle = AngleUtil.getSensorAngle(values[0], values[1]);
-//            rotationAnimation();
-//        }
-//
-//        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-//        }
-//    };
 
     //切换摄像头icon跟随手机角度进行旋转
     private void rotationAnimation(ImageView switchView, ImageView flashLampView) {
@@ -218,12 +201,12 @@ public class CameraInterface implements Camera.PreviewCallback {
         }
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     void setSaveVideoPath(@Nullable String saveVideoPath) {
         if (saveVideoPath != null) {
             this.saveVideoPath = saveVideoPath;
             File file = new File(saveVideoPath);
             if (!file.exists()) {
+                //noinspection ResultOfMethodCallIgnored
                 file.mkdirs();
             }
         }
@@ -324,17 +307,10 @@ public class CameraInterface implements Camera.PreviewCallback {
         callback.cameraHasOpened();
     }
 
-    private void setFlashModel() {
-        mParams = mCamera.getParameters();
-        mParams.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH); //设置camera参数为Torch模式
-        mCamera.setParameters(mParams);
-    }
-
     private synchronized void openCamera(int id) {
         try {
             this.mCamera = Camera.open(id);
-        } catch (Exception var3) {
-            var3.printStackTrace();
+        } catch (Exception e) {
             if (this.mErrorListener != null) {
                 this.mErrorListener.onError();
             }
@@ -344,8 +320,7 @@ public class CameraInterface implements Camera.PreviewCallback {
             try {
                 this.mCamera.enableShutterSound(false);
             } catch (Exception e) {
-                e.printStackTrace();
-                Log.e("CJT", "enable shutter sound faild");
+                LogUtil.e("enable shutter sound failed");
             }
         }
     }
@@ -413,8 +388,8 @@ public class CameraInterface implements Camera.PreviewCallback {
                 mCamera.startPreview();//启动浏览
                 isPreviewing = true;
                 safeToTakePicture = true;
-                Log.i(TAG, "=== Start Preview ===");
-            } catch (IOException e) {
+                LogUtil.i("=== Start Preview ===");
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -431,8 +406,8 @@ public class CameraInterface implements Camera.PreviewCallback {
                 //这句要在stopPreview后执行，不然会卡顿或者花屏
                 mCamera.setPreviewDisplay(null);
                 isPreviewing = false;
-                Log.i(TAG, "=== Stop Preview ===");
-            } catch (IOException e) {
+                LogUtil.i("=== Stop Preview ===");
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -455,19 +430,19 @@ public class CameraInterface implements Camera.PreviewCallback {
                 mCamera.release();
                 mCamera = null;
 //                destroyCameraInterface();
-                Log.i(TAG, "=== Destroy Camera ===");
+                LogUtil.i("=== Destroy Camera ===");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            Log.i(TAG, "=== Camera  Null===");
+            LogUtil.i( "=== Camera  Null===");
         }
     }
 
     /**
      * 拍照
      */
-    private int nowAngle;
+    private int mNowAngle;
 
     public void takePicture(final TakePictureCallback callback) {
         if (mCamera == null) {
@@ -475,14 +450,14 @@ public class CameraInterface implements Camera.PreviewCallback {
         }
         switch (cameraAngle) {
             case 90:
-                nowAngle = Math.abs(angle + cameraAngle) % 360;
+                mNowAngle = Math.abs(angle + cameraAngle) % 360;
                 break;
             case 270:
-                nowAngle = Math.abs(cameraAngle - angle);
+                mNowAngle = Math.abs(cameraAngle - angle);
                 break;
         }
 //
-        Log.i("CJT", angle + " = " + cameraAngle + " = " + nowAngle);
+        LogUtil.i(angle + " = " + cameraAngle + " = " + mNowAngle);
         if (safeToTakePicture) {
             mCamera.takePicture(null, null, new Camera.PictureCallback() {
                 @Override
@@ -490,14 +465,14 @@ public class CameraInterface implements Camera.PreviewCallback {
                     Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
                     Matrix matrix = new Matrix();
                     if (SELECTED_CAMERA == CAMERA_POST_POSITION) {
-                        matrix.setRotate(nowAngle);
+                        matrix.setRotate(mNowAngle);
                     } else if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
-                        matrix.setRotate(360 - nowAngle);
+                        matrix.setRotate(360 - mNowAngle);
                         matrix.postScale(-1, 1);
                     }
                     bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                     if (callback != null) {
-                        if (nowAngle == 90 || nowAngle == 270) {
+                        if (mNowAngle == 90 || mNowAngle == 270) {
                             callback.captureResult(bitmap, true);
                         } else {
                             callback.captureResult(bitmap, false);
@@ -511,33 +486,38 @@ public class CameraInterface implements Camera.PreviewCallback {
 
     //启动录像
     public void startRecord(Surface surface, float screenProp) {
-        if (mCamera == null) return;
-        mCamera.setPreviewCallback(null);
         final int nowAngle = (angle + 90) % 360;
-        //获取第一帧图片
-        Camera.Parameters parameters = mCamera.getParameters();
-        int width = parameters.getPreviewSize().width;
-        int height = parameters.getPreviewSize().height;
-        YuvImage yuv = new YuvImage(firstFrame_data, parameters.getPreviewFormat(), width, height, null);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
-        byte[] bytes = out.toByteArray();
-        videoFirstFrame = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        Matrix matrix = new Matrix();
-        if (SELECTED_CAMERA == CAMERA_POST_POSITION) {
-            matrix.setRotate(nowAngle);
-        } else if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
-            matrix.setRotate(270);
+        if (mCamera != null) {
+            mCamera.setPreviewCallback(null);
+            //获取第一帧图片
+            Camera.Parameters parameters = mCamera.getParameters();
+            int width = parameters.getPreviewSize().width;
+            int height = parameters.getPreviewSize().height;
+            YuvImage yuv = new YuvImage(firstFrame_data, parameters.getPreviewFormat(), width, height, null);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+            byte[] bytes = out.toByteArray();
+            videoFirstFrame = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            Matrix matrix = new Matrix();
+            if (SELECTED_CAMERA == CAMERA_POST_POSITION) {
+                matrix.setRotate(nowAngle);
+            } else if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
+                matrix.setRotate(270);
+            }
+            videoFirstFrame = Bitmap.createBitmap(videoFirstFrame, 0, 0, videoFirstFrame.getWidth(), videoFirstFrame.getHeight(), matrix, true);
         }
-        videoFirstFrame = Bitmap.createBitmap(videoFirstFrame, 0, 0, videoFirstFrame.getWidth(), videoFirstFrame.getHeight(), matrix, true);
         if (isRecorder) {
             return;
         }
         if (mCamera == null) {
             openCamera(SELECTED_CAMERA);
         }
-        if (mediaRecorder == null) {
-            mediaRecorder = new MediaRecorder();
+        if (mCamera == null) {
+            return;
+        }
+        if (mMediaRecorder != null) {
+            mMediaRecorder.release();
+            mMediaRecorder = null;
         }
         if (mParams == null) {
             mParams = mCamera.getParameters();
@@ -548,13 +528,14 @@ public class CameraInterface implements Camera.PreviewCallback {
         }
         mCamera.setParameters(mParams);
         mCamera.unlock();
-        mediaRecorder.reset();
-        mediaRecorder.setCamera(mCamera);
-        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mMediaRecorder = new MediaRecorder();
+        mMediaRecorder.reset();
+        mMediaRecorder.setCamera(mCamera);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         Camera.Size videoSize;
         if (mParams.getSupportedVideoSizes() == null) {
             videoSize = CameraParamUtil.getInstance().getPreviewSize(mParams.getSupportedPreviewSizes(), 600,
@@ -564,64 +545,55 @@ public class CameraInterface implements Camera.PreviewCallback {
                     screenProp);
         }
         if (videoSize.width == videoSize.height) {
-            mediaRecorder.setVideoSize(preview_width, preview_height);
+            mMediaRecorder.setVideoSize(preview_width, preview_height);
         } else {
-            mediaRecorder.setVideoSize(videoSize.width, videoSize.height);
+            mMediaRecorder.setVideoSize(videoSize.width, videoSize.height);
         }
         if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
             //手机预览倒立的处理
             if (cameraAngle == 270) {
                 //横屏
                 if (nowAngle == 0) {
-                    mediaRecorder.setOrientationHint(180);
+                    mMediaRecorder.setOrientationHint(180);
                 } else if (nowAngle == 270) {
-                    mediaRecorder.setOrientationHint(270);
+                    mMediaRecorder.setOrientationHint(270);
                 } else {
-                    mediaRecorder.setOrientationHint(90);
+                    mMediaRecorder.setOrientationHint(90);
                 }
             } else {
                 if (nowAngle == 90) {
-                    mediaRecorder.setOrientationHint(270);
+                    mMediaRecorder.setOrientationHint(270);
                 } else if (nowAngle == 270) {
-                    mediaRecorder.setOrientationHint(90);
+                    mMediaRecorder.setOrientationHint(90);
                 } else {
-                    mediaRecorder.setOrientationHint(nowAngle);
+                    mMediaRecorder.setOrientationHint(nowAngle);
                 }
             }
         } else {
-            mediaRecorder.setOrientationHint(nowAngle);
+            mMediaRecorder.setOrientationHint(nowAngle);
         }
-//        if (DeviceUtil.isHuaWeiRongyao()) {
-//            mediaRecorder.setVideoEncodingBitRate(4 * 100000);
-//        } else {
-//            mediaRecorder.setVideoEncodingBitRate(mediaQuality);
-//        }
-        mediaRecorder.setVideoEncodingBitRate(mediaQuality);
-        mediaRecorder.setPreviewDisplay(surface);
+        try {
+            mMediaRecorder.setVideoEncodingBitRate(mediaQuality);
+        } catch (Exception e) {
+            mMediaRecorder.setVideoEncodingBitRate(JCameraView.MEDIA_QUALITY_FUNNY);
+        }
+        mMediaRecorder.setPreviewDisplay(surface);
         videoFileName = "video_" + System.currentTimeMillis() + ".mp4";
         if (saveVideoPath == null || saveVideoPath.equals("")) {
             saveVideoPath = Environment.getExternalStorageDirectory().getPath();
         }
         videoFileAbsPath = saveVideoPath + File.separator + videoFileName;
-        mediaRecorder.setOutputFile(videoFileAbsPath);
+        mMediaRecorder.setOutputFile(videoFileAbsPath);
         try {
-            mediaRecorder.prepare();
-            mediaRecorder.start();
+            mMediaRecorder.prepare();
+            mMediaRecorder.start();
             isRecorder = true;
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-            Log.i("CJT", "startRecord IllegalStateException");
-            if (this.mErrorListener != null) {
-                this.mErrorListener.onError();
+        } catch (Exception e) {
+            if (mMediaRecorder != null) {
+                mMediaRecorder.release();
+                mMediaRecorder = null;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.i("CJT", "startRecord IOException");
-            if (this.mErrorListener != null) {
-                this.mErrorListener.onError();
-            }
-        } catch (RuntimeException e) {
-            Log.i("CJT", "startRecord RuntimeException");
+            isRecorder = false;
         }
     }
 
@@ -630,23 +602,22 @@ public class CameraInterface implements Camera.PreviewCallback {
         if (!isRecorder) {
             return;
         }
-        if (mediaRecorder != null) {
-            mediaRecorder.setOnErrorListener(null);
-            mediaRecorder.setOnInfoListener(null);
-            mediaRecorder.setPreviewDisplay(null);
+        if (mMediaRecorder != null) {
+            mMediaRecorder.setOnErrorListener(null);
+            mMediaRecorder.setOnInfoListener(null);
+            mMediaRecorder.setPreviewDisplay(null);
             try {
-                mediaRecorder.stop();
-            } catch (RuntimeException e) {
-                e.printStackTrace();
-                mediaRecorder = null;
-                mediaRecorder = new MediaRecorder();
+                mMediaRecorder.stop();
+            } catch (Exception e) {
+                mMediaRecorder = null;
             } finally {
-                if (mediaRecorder != null) {
-                    mediaRecorder.release();
+                if (mMediaRecorder != null) {
+                    mMediaRecorder.release();
                 }
-                mediaRecorder = null;
+                mMediaRecorder = null;
                 isRecorder = false;
             }
+            LogUtil.i("MediaRecorder release.");
             if (isShort) {
                 if (FileUtil.deleteFile(videoFileAbsPath)) {
                     callback.recordResult(null, null);
@@ -682,14 +653,14 @@ public class CameraInterface implements Camera.PreviewCallback {
             return;
         }
         final Camera.Parameters params = mCamera.getParameters();
-        Rect focusRect = calculateTapArea(x, y, 1f, context);
+        Rect focusRect = calculateTapArea(x, y, context);
         mCamera.cancelAutoFocus();
         if (params.getMaxNumFocusAreas() > 0) {
             List<Camera.Area> focusAreas = new ArrayList<>();
             focusAreas.add(new Camera.Area(focusRect, 800));
             params.setFocusAreas(focusAreas);
         } else {
-            Log.i(TAG, "focus areas not supported");
+            LogUtil.i("focus areas not supported");
             callback.focusSuccess();
             return;
         }
@@ -713,24 +684,24 @@ public class CameraInterface implements Camera.PreviewCallback {
                 }
             });
         } catch (Exception e) {
-            Log.e(TAG, "autoFocus failer");
+            LogUtil.e("autoFocus failed");
         }
     }
 
-
-    private static Rect calculateTapArea(float x, float y, float coefficient, Context context) {
+    private Rect calculateTapArea(float x, float y, Context context) {
         float focusAreaSize = 300;
-        int areaSize = Float.valueOf(focusAreaSize * coefficient).intValue();
+        int areaSize = Float.valueOf(focusAreaSize * 1f).intValue();
         int centerX = (int) (x / ScreenUtils.getScreenWidth(context) * 2000 - 1000);
         int centerY = (int) (y / ScreenUtils.getScreenHeight(context) * 2000 - 1000);
-        int left = clamp(centerX - areaSize / 2, -1000, 1000);
-        int top = clamp(centerY - areaSize / 2, -1000, 1000);
+        int left = clamp(centerX - areaSize / 2);
+        int top = clamp(centerY - areaSize / 2);
         RectF rectF = new RectF(left, top, left + areaSize, top + areaSize);
-        return new Rect(Math.round(rectF.left), Math.round(rectF.top), Math.round(rectF.right), Math.round(rectF
-                .bottom));
+        return new Rect(Math.round(rectF.left), Math.round(rectF.top), Math.round(rectF.right), Math.round(rectF.bottom));
     }
 
-    private static int clamp(int x, int min, int max) {
+    private int clamp(int x) {
+        final int min = -1000;
+        final int max = 1000;
         if (x > max) {
             return max;
         }
@@ -740,7 +711,6 @@ public class CameraInterface implements Camera.PreviewCallback {
     void setErrorListener(ErrorListener errorListener) {
         this.mErrorListener = errorListener;
     }
-
 
     public interface StopRecordCallback {
         void recordResult(String url, Bitmap firstFrame);

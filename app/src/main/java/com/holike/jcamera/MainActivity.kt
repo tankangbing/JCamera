@@ -8,31 +8,21 @@ import android.util.Log
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import pony.xcode.jcamera.JCamera
-import pony.xcode.jcamera.JCameraActivity
 import pony.xcode.jcamera.JCameraConfig
 import pony.xcode.jcamera.JCameraView
 
-class MainActivity : AppCompatActivity(), JCamera.JCameraPermissionCallback {
+class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         open_camera_btn.setOnClickListener {
-            if (JCamera.areJCameraEnabled(this)) {
-                startJCamera()
-            } else {
-                JCamera.requestJCamera(this, 100)
-            }
-        }
-    }
-
-    private fun startJCamera() {
-        JCameraActivity.startCamera(this, JCameraConfig.Builder().setFeatures(JCameraView.BUTTON_STATE_ONLY_RECORDER).build(), 10086)
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (requestCode == 100 && grantResults.isNotEmpty()) {
-            JCamera.handleJCameraPermissionsResult(this, permissions, grantResults, this)
+            JCamera.with(this)
+                    .config(JCameraConfig.Builder()
+                            .setFeatures(JCameraView.BUTTON_STATE_ONLY_RECORDER)
+                            .build())
+                    .themeId(R.style.JCameraTheme)
+                    .requestCode(10086).start()
         }
     }
 
@@ -55,16 +45,5 @@ class MainActivity : AppCompatActivity(), JCamera.JCameraPermissionCallback {
                 Log.e("framePath", framePath)
             }
         }
-    }
-
-    override fun onJCameraPermissionDenied() {
-    }
-
-    override fun onJCameraPermissionForbid() {
-
-    }
-
-    override fun onJCameraPermissionGranted() {
-        startJCamera()
     }
 }

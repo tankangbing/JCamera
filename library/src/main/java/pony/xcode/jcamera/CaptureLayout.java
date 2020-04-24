@@ -6,8 +6,10 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -15,44 +17,44 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+
 import pony.xcode.jcamera.listener.CaptureListener;
-import pony.xcode.jcamera.listener.ClickListener;
 import pony.xcode.jcamera.listener.TypeListener;
 
 
 public class CaptureLayout extends FrameLayout {
 
-    private CaptureListener captureListener;    //拍照按钮监听
-    private TypeListener typeListener;          //拍照或录制后接结果按钮监听
-    //    private ReturnListener returnListener;      //退出按钮监听
-    private ClickListener leftClickListener;    //左边按钮监听
-    private ClickListener rightClickListener;   //右边按钮监听
+    private CaptureListener mCaptureListener;    //拍照按钮监听
+    private TypeListener mTypeListener;          //拍照或录制后接结果按钮监听
 
     public void setTypeListener(TypeListener typeListener) {
-        this.typeListener = typeListener;
+        this.mTypeListener = typeListener;
     }
 
-    public void setCaptureListener(CaptureListener captureListener) {
-        this.captureListener = captureListener;
+    public void setCaptureListener(CaptureListener l) {
+        this.mCaptureListener = l;
     }
 
-//    public void setReturnListener(ReturnListener returnListener) {
-//        this.returnListener = returnListener;
-//    }
+    private CaptureButton mCaptureBtn;      //拍照按钮
+    private TypeButton mConfirmBtn;         //确认按钮
+    private TypeButton mCancelBtn;          //取消按钮
+    private ReturnButton mReturnBtn;        //返回按钮
+    private ImageView mCustomLeftIView;            //左边自定义按钮
+    private ImageView mCustomRightIView;            //右边自定义按钮
+    private TextView mTipTextView;               //提示文本
+    private int mTipTextColor = 0xFFFFFFFF;
+    private int mTipTextSize;
+    private String mBothText = "轻触拍照，长按摄像";
+    private String mCaptureText = "轻触拍照";
+    private String mRecorderText = "长按摄像";
+    private String mRecordShortText = "录制时间过短";
 
-    private CaptureButton btn_capture;      //拍照按钮
-    private TypeButton btn_confirm;         //确认按钮
-    private TypeButton btn_cancel;          //取消按钮
-    private ReturnButton btn_return;        //返回按钮
-    private ImageView iv_custom_left;            //左边自定义按钮
-    private ImageView iv_custom_right;            //右边自定义按钮
-    private TextView txt_tip;               //提示文本
-
-    private int layout_width;
-    private int layout_height;
-    private int button_size;
-    private int iconLeft = 0;
-    private int iconRight = 0;
+    private int mLayoutWidth;
+    private int mLayoutHeight;
+    private int mButtonSize;
+    private int mIconLeft = 0;
+    private int mIconRight = 0;
 
     private boolean isFirst = true;
 
@@ -73,54 +75,77 @@ public class CaptureLayout extends FrameLayout {
         manager.getDefaultDisplay().getMetrics(outMetrics);
 
         if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            layout_width = outMetrics.widthPixels;
+            mLayoutWidth = outMetrics.widthPixels;
         } else {
-            layout_width = outMetrics.widthPixels / 2;
+            mLayoutWidth = outMetrics.widthPixels / 2;
         }
-        button_size = (int) (layout_width / 4.5f);
-        layout_height = button_size + (button_size / 5) * 2 + 100;
-
-        initView();
+        mButtonSize = (int) (mLayoutWidth / 4.5f);
+        mLayoutHeight = mButtonSize + (mButtonSize / 5) * 2 + 100;
+        final float scale = context.getResources().getDisplayMetrics().scaledDensity;
+        mTipTextSize = (int) (13 * scale + 0.5f);
+        Resources.Theme theme = context.getTheme();
+        if (theme != null) {
+            TypedValue typedValue = new TypedValue();
+            if (theme.resolveAttribute(R.attr.jc_tips_textColor, typedValue, true)) {
+                mTipTextColor = ContextCompat.getColor(context, typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_tips_textSize, typedValue, true)) {
+                mTipTextSize = context.getResources().getDimensionPixelSize(typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_tips_both_text, typedValue, true)) {
+                mBothText = context.getString(typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_tips_capture_text, typedValue, true)) {
+                mCaptureText = context.getString(typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_tips_recorder_text, typedValue, true)) {
+                mRecorderText = context.getString(typedValue.resourceId);
+            }
+            if (theme.resolveAttribute(R.attr.jc_tips_record_short, typedValue, true)) {
+                mRecordShortText = context.getString(typedValue.resourceId);
+            }
+        }
+        initView(context);
         initEvent();
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(layout_width, layout_height);
+        setMeasuredDimension(mLayoutWidth, mLayoutHeight);
     }
 
     public void initEvent() {
         //默认TypeButton为隐藏
-        iv_custom_right.setVisibility(GONE);
-        btn_cancel.setVisibility(GONE);
-        btn_confirm.setVisibility(GONE);
+        mCustomRightIView.setVisibility(GONE);
+        mCancelBtn.setVisibility(GONE);
+        mConfirmBtn.setVisibility(GONE);
     }
 
     public void startTypeBtnAnimator() {
         //拍照录制结果后的动画
-        if (this.iconLeft != 0)
-            iv_custom_left.setVisibility(GONE);
+        if (this.mIconLeft != 0)
+            mCustomLeftIView.setVisibility(GONE);
         else
-            btn_return.setVisibility(GONE);
-        if (this.iconRight != 0)
-            iv_custom_right.setVisibility(GONE);
-        btn_capture.setVisibility(GONE);
-        btn_cancel.setVisibility(VISIBLE);
-        btn_confirm.setVisibility(VISIBLE);
-        btn_cancel.setClickable(false);
-        btn_confirm.setClickable(false);
-        ObjectAnimator animator_cancel = ObjectAnimator.ofFloat(btn_cancel, "translationX", layout_width / 4f, 0);
-        ObjectAnimator animator_confirm = ObjectAnimator.ofFloat(btn_confirm, "translationX", -layout_width / 4f, 0);
+            mReturnBtn.setVisibility(GONE);
+        if (this.mIconRight != 0)
+            mCustomRightIView.setVisibility(GONE);
+        mCaptureBtn.setVisibility(GONE);
+        mCancelBtn.setVisibility(VISIBLE);
+        mConfirmBtn.setVisibility(VISIBLE);
+        mCancelBtn.setClickable(false);
+        mConfirmBtn.setClickable(false);
+        ObjectAnimator cancelAnim = ObjectAnimator.ofFloat(mCancelBtn, "translationX", mLayoutWidth / 4f, 0);
+        ObjectAnimator confirmAnim = ObjectAnimator.ofFloat(mConfirmBtn, "translationX", -mLayoutWidth / 4f, 0);
 
         AnimatorSet set = new AnimatorSet();
-        set.playTogether(animator_cancel, animator_confirm);
+        set.playTogether(cancelAnim, confirmAnim);
         set.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                btn_cancel.setClickable(true);
-                btn_confirm.setClickable(true);
+                mCancelBtn.setClickable(true);
+                mConfirmBtn.setClickable(true);
             }
         });
         set.setDuration(200);
@@ -128,41 +153,41 @@ public class CaptureLayout extends FrameLayout {
     }
 
 
-    private void initView() {
+    private void initView(Context context) {
         setWillNotDraw(false);
         //拍照按钮
-        btn_capture = new CaptureButton(getContext(), button_size);
-        LayoutParams btn_capture_param = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        btn_capture_param.gravity = Gravity.CENTER;
-        btn_capture.setLayoutParams(btn_capture_param);
-        btn_capture.setCaptureListener(new CaptureListener() {
+        mCaptureBtn = new CaptureButton(context, mButtonSize);
+        LayoutParams captureBtnParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        captureBtnParams.gravity = Gravity.CENTER;
+        mCaptureBtn.setLayoutParams(captureBtnParams);
+        mCaptureBtn.setCaptureListener(new CaptureListener() {
             @Override
             public void takePictures() {
-                if (captureListener != null) {
-                    captureListener.takePictures();
+                if (mCaptureListener != null) {
+                    mCaptureListener.takePictures();
                 }
             }
 
             @Override
             public void recordShort(long time) {
-                if (captureListener != null) {
-                    captureListener.recordShort(time);
+                if (mCaptureListener != null) {
+                    mCaptureListener.recordShort(time);
                 }
                 startAlphaAnimation();
             }
 
             @Override
             public void recordStart() {
-                if (captureListener != null) {
-                    captureListener.recordStart();
+                if (mCaptureListener != null) {
+                    mCaptureListener.recordStart();
                 }
                 startAlphaAnimation();
             }
 
             @Override
             public void recordEnd(long time) {
-                if (captureListener != null) {
-                    captureListener.recordEnd(time);
+                if (mCaptureListener != null) {
+                    mCaptureListener.recordEnd(time);
                 }
                 startAlphaAnimation();
                 startTypeBtnAnimator();
@@ -170,30 +195,23 @@ public class CaptureLayout extends FrameLayout {
 
             @Override
             public void recordZoom(float zoom) {
-                if (captureListener != null) {
-                    captureListener.recordZoom(zoom);
-                }
-            }
-
-            @Override
-            public void recordError() {
-                if (captureListener != null) {
-                    captureListener.recordError();
+                if (mCaptureListener != null) {
+                    mCaptureListener.recordZoom(zoom);
                 }
             }
         });
 
         //取消按钮
-        btn_cancel = new TypeButton(getContext(), TypeButton.TYPE_CANCEL, button_size);
-        final LayoutParams btn_cancel_param = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        btn_cancel_param.gravity = Gravity.CENTER_VERTICAL;
-        btn_cancel_param.setMargins((layout_width / 4) - button_size / 2, 0, 0, 0);
-        btn_cancel.setLayoutParams(btn_cancel_param);
-        btn_cancel.setOnClickListener(new OnClickListener() {
+        mCancelBtn = new TypeButton(context, TypeButton.TYPE_CANCEL, mButtonSize);
+        final LayoutParams cancelBtnParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        cancelBtnParams.gravity = Gravity.CENTER_VERTICAL;
+        cancelBtnParams.setMargins((mLayoutWidth / 4) - mButtonSize / 2, 0, 0, 0);
+        mCancelBtn.setLayoutParams(cancelBtnParams);
+        mCancelBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (typeListener != null) {
-                    typeListener.cancel();
+                if (mTypeListener != null) {
+                    mTypeListener.cancel();
                 }
                 startAlphaAnimation();
 //                resetCaptureLayout();
@@ -201,16 +219,16 @@ public class CaptureLayout extends FrameLayout {
         });
 
         //确认按钮
-        btn_confirm = new TypeButton(getContext(), TypeButton.TYPE_CONFIRM, button_size);
-        LayoutParams btn_confirm_param = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        btn_confirm_param.gravity = Gravity.CENTER_VERTICAL | Gravity.RIGHT;
-        btn_confirm_param.setMargins(0, 0, (layout_width / 4) - button_size / 2, 0);
-        btn_confirm.setLayoutParams(btn_confirm_param);
-        btn_confirm.setOnClickListener(new OnClickListener() {
+        mConfirmBtn = new TypeButton(context, TypeButton.TYPE_CONFIRM, mButtonSize);
+        LayoutParams confirmBtnParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        confirmBtnParams.gravity = Gravity.CENTER_VERTICAL | Gravity.END;
+        confirmBtnParams.setMargins(0, 0, (mLayoutWidth / 4) - mButtonSize / 2, 0);
+        mConfirmBtn.setLayoutParams(confirmBtnParams);
+        mConfirmBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (typeListener != null) {
-                    typeListener.confirm();
+                if (mTypeListener != null) {
+                    mTypeListener.confirm();
                 }
                 startAlphaAnimation();
 //                resetCaptureLayout();
@@ -218,152 +236,136 @@ public class CaptureLayout extends FrameLayout {
         });
 
         //返回按钮
-        btn_return = new ReturnButton(getContext(), (int) (button_size / 2.5f));
-        LayoutParams btn_return_param = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        btn_return_param.gravity = Gravity.CENTER_VERTICAL;
-        btn_return_param.setMargins(layout_width / 6, 0, 0, 0);
-        btn_return.setLayoutParams(btn_return_param);
-        btn_return.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (leftClickListener != null) {
-                    leftClickListener.onClick();
-                }
-            }
-        });
+        mReturnBtn = new ReturnButton(context, (int) (mButtonSize / 2.5f));
+        LayoutParams mReturnParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        mReturnParams.gravity = Gravity.CENTER_VERTICAL;
+        mReturnParams.setMargins(mLayoutWidth / 6, 0, 0, 0);
+        mReturnBtn.setLayoutParams(mReturnParams);
         //左边自定义按钮
-        iv_custom_left = new ImageView(getContext());
-        LayoutParams iv_custom_param_left = new LayoutParams((int) (button_size / 2.5f), (int) (button_size / 2.5f));
-        iv_custom_param_left.gravity = Gravity.CENTER_VERTICAL;
-        iv_custom_param_left.setMargins(layout_width / 6, 0, 0, 0);
-        iv_custom_left.setLayoutParams(iv_custom_param_left);
-        iv_custom_left.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (leftClickListener != null) {
-                    leftClickListener.onClick();
-                }
-            }
-        });
+        mCustomLeftIView = new ImageView(context);
+        LayoutParams customLeftParams = new LayoutParams((int) (mButtonSize / 2.5f), (int) (mButtonSize / 2.5f));
+        customLeftParams.gravity = Gravity.CENTER_VERTICAL;
+        customLeftParams.setMargins(mLayoutWidth / 6, 0, 0, 0);
+        mCustomLeftIView.setLayoutParams(customLeftParams);
 
         //右边自定义按钮
-        iv_custom_right = new ImageView(getContext());
-        LayoutParams iv_custom_param_right = new LayoutParams((int) (button_size / 2.5f), (int) (button_size / 2.5f));
-        iv_custom_param_right.gravity = Gravity.CENTER_VERTICAL | Gravity.RIGHT;
-        iv_custom_param_right.setMargins(0, 0, layout_width / 6, 0);
-        iv_custom_right.setLayoutParams(iv_custom_param_right);
-        iv_custom_right.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (rightClickListener != null) {
-                    rightClickListener.onClick();
-                }
-            }
-        });
+        mCustomRightIView = new ImageView(context);
+        LayoutParams customRightParams = new LayoutParams((int) (mButtonSize / 2.5f), (int) (mButtonSize / 2.5f));
+        customRightParams.gravity = Gravity.CENTER_VERTICAL | Gravity.END;
+        customRightParams.setMargins(0, 0, mLayoutWidth / 6, 0);
+        mCustomRightIView.setLayoutParams(customRightParams);
 
-        txt_tip = new TextView(getContext());
-        LayoutParams txt_param = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        txt_param.gravity = Gravity.CENTER_HORIZONTAL;
-        txt_param.setMargins(0, 0, 0, 0);
-        setTip(getContext().getString(R.string.jcamera_both_tips));
-        txt_tip.setTextColor(0xFFFFFFFF);
-        txt_tip.setGravity(Gravity.CENTER);
-        txt_tip.setLayoutParams(txt_param);
+        mTipTextView = new TextView(context);
+        LayoutParams tipTxtParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        tipTxtParams.gravity = Gravity.CENTER_HORIZONTAL;
+        tipTxtParams.setMargins(0, 0, 0, 0);
+        mTipTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTipTextSize);
+        mTipTextView.setTextColor(mTipTextColor);
+        mTipTextView.setGravity(Gravity.CENTER);
+        mTipTextView.setLayoutParams(tipTxtParams);
+        setTip(mBothText);
 
-        this.addView(btn_capture);
-        this.addView(btn_cancel);
-        this.addView(btn_confirm);
-        this.addView(btn_return);
-        this.addView(iv_custom_left);
-        this.addView(iv_custom_right);
-        this.addView(txt_tip);
+        this.addView(mCaptureBtn);
+        this.addView(mCancelBtn);
+        this.addView(mConfirmBtn);
+        this.addView(mReturnBtn);
+        this.addView(mCustomLeftIView);
+        this.addView(mCustomRightIView);
+        this.addView(mTipTextView);
 
+    }
+
+    public void setLeftClickListener(View.OnClickListener l) {
+        mCustomLeftIView.setOnClickListener(l);
+    }
+
+    public void setRightClickListener(View.OnClickListener l) {
+        mCustomRightIView.setOnClickListener(l);
+    }
+
+    public void setReturnListener(View.OnClickListener l) {
+        mReturnBtn.setOnClickListener(l);
     }
 
     /**************************************************
      * 对外提供的API                      *
      **************************************************/
     public void resetCaptureLayout() {
-        btn_capture.resetState();
-        btn_cancel.setVisibility(GONE);
-        btn_confirm.setVisibility(GONE);
-        btn_capture.setVisibility(VISIBLE);
-        if (this.iconLeft != 0)
-            iv_custom_left.setVisibility(VISIBLE);
+        mCaptureBtn.resetState();
+        mCancelBtn.setVisibility(GONE);
+        mConfirmBtn.setVisibility(GONE);
+        mCaptureBtn.setVisibility(VISIBLE);
+        if (this.mIconLeft != 0)
+            mCustomLeftIView.setVisibility(VISIBLE);
         else
-            btn_return.setVisibility(VISIBLE);
-        if (this.iconRight != 0)
-            iv_custom_right.setVisibility(VISIBLE);
+            mReturnBtn.setVisibility(VISIBLE);
+        if (this.mIconRight != 0)
+            mCustomRightIView.setVisibility(VISIBLE);
     }
 
 
     public void startAlphaAnimation() {
         if (isFirst) {
-            ObjectAnimator animator_txt_tip = ObjectAnimator.ofFloat(txt_tip, "alpha", 1f, 0f);
-            animator_txt_tip.setDuration(500);
-            animator_txt_tip.start();
+            ObjectAnimator animator = ObjectAnimator.ofFloat(mTipTextView, "alpha", 1f, 0f);
+            animator.setDuration(500);
+            animator.start();
             isFirst = false;
         }
     }
 
-    public void setTextWithAnimation(String tip) {
-        txt_tip.setText(tip);
-        ObjectAnimator animator_txt_tip = ObjectAnimator.ofFloat(txt_tip, "alpha", 0f, 1f, 1f, 0f);
-        animator_txt_tip.setDuration(2500);
-        animator_txt_tip.start();
+    private ObjectAnimator mTextAnimation;
+
+    public void setRecordShortTipWithAnimation() {
+        mTipTextView.setText(mRecordShortText);
+        if (mTextAnimation != null) {
+            mTextAnimation.end();
+            mTextAnimation.cancel();
+            mTextAnimation = null;
+        }
+        mTextAnimation = ObjectAnimator.ofFloat(mTipTextView, "alpha", 0f, 1f, 1f, 0f);
+        mTextAnimation.setDuration(2000);
+        mTextAnimation.start();
     }
 
     public void setMinDuration(int minDuration) {
-        btn_capture.setMinDuration(minDuration);
+        mCaptureBtn.setMinDuration(minDuration);
     }
 
     public void setMaxDuration(int maxDuration) {
-        btn_capture.setMaxDuration(maxDuration);
+        mCaptureBtn.setMaxDuration(maxDuration);
     }
 
     public void setButtonFeatures(int state) {
-        btn_capture.setButtonFeatures(state);
+        mCaptureBtn.setButtonFeatures(state);
         if (state == JCameraView.BUTTON_STATE_ONLY_RECORDER) {
-            setTip(getContext().getString(R.string.jcamera_recorder_only_tips));
+            setTip(mRecorderText);
         } else if (state == JCameraView.BUTTON_STATE_ONLY_CAPTURE) {
-            setTip(getContext().getString(R.string.jcamera_capture_only_tips));
+            setTip(mCaptureText);
         } else {
-            setTip(getContext().getString(R.string.jcamera_both_tips));
+            setTip(mBothText);
         }
     }
 
     public void setTip(String tip) {
-        txt_tip.setText(tip);
-    }
-
-    public void showTip() {
-        txt_tip.setVisibility(VISIBLE);
+        mTipTextView.setText(tip);
     }
 
     public void setIconSrc(int iconLeft, int iconRight) {
-        this.iconLeft = iconLeft;
-        this.iconRight = iconRight;
-        if (this.iconLeft != 0) {
-            iv_custom_left.setImageResource(iconLeft);
-            iv_custom_left.setVisibility(VISIBLE);
-            btn_return.setVisibility(GONE);
+        this.mIconLeft = iconLeft;
+        this.mIconRight = iconRight;
+        if (this.mIconLeft != 0) {
+            mCustomLeftIView.setImageResource(iconLeft);
+            mCustomLeftIView.setVisibility(VISIBLE);
+            mReturnBtn.setVisibility(GONE);
         } else {
-            iv_custom_left.setVisibility(GONE);
-            btn_return.setVisibility(VISIBLE);
+            mCustomLeftIView.setVisibility(GONE);
+            mReturnBtn.setVisibility(VISIBLE);
         }
-        if (this.iconRight != 0) {
-            iv_custom_right.setImageResource(iconRight);
-            iv_custom_right.setVisibility(VISIBLE);
+        if (this.mIconRight != 0) {
+            mCustomRightIView.setImageResource(iconRight);
+            mCustomRightIView.setVisibility(VISIBLE);
         } else {
-            iv_custom_right.setVisibility(GONE);
+            mCustomRightIView.setVisibility(GONE);
         }
-    }
-
-    public void setLeftClickListener(ClickListener leftClickListener) {
-        this.leftClickListener = leftClickListener;
-    }
-
-    public void setRightClickListener(ClickListener rightClickListener) {
-        this.rightClickListener = rightClickListener;
     }
 }

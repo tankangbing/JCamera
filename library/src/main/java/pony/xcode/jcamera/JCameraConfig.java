@@ -1,10 +1,22 @@
 package pony.xcode.jcamera;
 
+import android.graphics.Color;
+
 public class JCameraConfig {
     static final int DURATION_MIN = 1500;  //默认最小录制时长
     static final int DURATION_MAX = 15 * 1000; //默认最大录制时长
     static final int QUALITY = JCameraView.MEDIA_QUALITY_HIGH; //默认拍摄质量
     static final int FEATURES = JCameraView.BUTTON_STATE_BOTH; //默认模式-点击拍照长按摄像
+    static final int PROGRESS_COLOR = 0xEE16AE16; //进度颜色
+    static final int OUTSIDE_COLOR = 0xEEDCDCDC; //外圆颜色
+    static final int INSIDE_COLOR = 0xFFFFFFFF; //内圆颜色
+
+    static final int CANCEL_BACKGROUND = 0xEEDCDCDC; //取消按钮背景色
+    static final int CANCEL_ICON_COLOR = Color.BLACK; //取消按钮中间箭头颜色
+    static final int CONFIRM_BACKGROUND = 0xFFFFFFFF; //确认按钮背景颜色
+    static final int CONFIRM_ICON_COLOR = 0xFF00CC00; //确认按钮中间打勾颜色
+
+    static final int BACKTRACK_COLOR = Color.WHITE;  //返回键颜色
 
     private String savePath; //保存的路径
     private int mediaQuality; //录制质量
