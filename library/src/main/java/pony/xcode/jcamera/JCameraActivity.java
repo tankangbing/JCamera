@@ -1,9 +1,11 @@
 package pony.xcode.jcamera;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -64,8 +66,11 @@ public class JCameraActivity extends AppCompatActivity implements JCameraListene
     private JCameraView mJCameraView;
     private boolean mUserSetting;
 
+    @SuppressLint("SourceLockedOrientationActivity")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        //强制竖屏
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         int themeId = getIntent().getIntExtra("themeId", 0);
         if (themeId != 0) {
             setTheme(themeId);
