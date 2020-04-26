@@ -217,46 +217,50 @@ public class CameraInterface implements Camera.PreviewCallback {
         if (mCamera == null) {
             return;
         }
-        if (mParams == null) {
-            mParams = mCamera.getParameters();
-        }
-        if (!mParams.isZoomSupported() || !mParams.isSmoothZoomSupported()) {
-            return;
-        }
-        switch (type) {
-            case TYPE_RECORDER:
-                //如果不是录制视频中，上滑不会缩放
-                if (!isRecorder) {
-                    return;
-                }
-                if (zoom >= 0) {
+        try {
+            if (mParams == null) {
+                mParams = mCamera.getParameters();
+            }
+            if (!mParams.isZoomSupported() || !mParams.isSmoothZoomSupported()) {
+                return;
+            }
+            switch (type) {
+                case TYPE_RECORDER:
+                    //如果不是录制视频中，上滑不会缩放
+                    if (!isRecorder) {
+                        return;
+                    }
+                    if (zoom >= 0) {
+                        //每移动50个像素缩放一个级别
+                        int scaleRate = (int) (zoom / 40);
+                        if (scaleRate <= mParams.getMaxZoom() && scaleRate >= nowScaleRate && recordScaleRate != scaleRate) {
+                            mParams.setZoom(scaleRate);
+                            mCamera.setParameters(mParams);
+                            recordScaleRate = scaleRate;
+                        }
+                    }
+                    break;
+                case TYPE_CAPTURE:
+                    if (isRecorder) {
+                        return;
+                    }
                     //每移动50个像素缩放一个级别
-                    int scaleRate = (int) (zoom / 40);
-                    if (scaleRate <= mParams.getMaxZoom() && scaleRate >= nowScaleRate && recordScaleRate != scaleRate) {
-                        mParams.setZoom(scaleRate);
+                    int scaleRate = (int) (zoom / 50);
+                    if (scaleRate < mParams.getMaxZoom()) {
+                        nowScaleRate += scaleRate;
+                        if (nowScaleRate < 0) {
+                            nowScaleRate = 0;
+                        } else if (nowScaleRate > mParams.getMaxZoom()) {
+                            nowScaleRate = mParams.getMaxZoom();
+                        }
+                        mParams.setZoom(nowScaleRate);
                         mCamera.setParameters(mParams);
-                        recordScaleRate = scaleRate;
                     }
-                }
-                break;
-            case TYPE_CAPTURE:
-                if (isRecorder) {
-                    return;
-                }
-                //每移动50个像素缩放一个级别
-                int scaleRate = (int) (zoom / 50);
-                if (scaleRate < mParams.getMaxZoom()) {
-                    nowScaleRate += scaleRate;
-                    if (nowScaleRate < 0) {
-                        nowScaleRate = 0;
-                    } else if (nowScaleRate > mParams.getMaxZoom()) {
-                        nowScaleRate = mParams.getMaxZoom();
-                    }
-                    mParams.setZoom(nowScaleRate);
-                    mCamera.setParameters(mParams);
-                }
-                LogUtil.i("setZoom = " + nowScaleRate);
-                break;
+                    LogUtil.i("setZoom = " + nowScaleRate);
+                    break;
+            }
+        } catch (Exception e) {
+            LogUtil.e("setZoom failed " + e.getMessage());
         }
 
     }
@@ -320,7 +324,7 @@ public class CameraInterface implements Camera.PreviewCallback {
             try {
                 this.mCamera.enableShutterSound(false);
             } catch (Exception e) {
-                LogUtil.e("enable shutter sound failed");
+                LogUtil.e("enable shutter sound failed " + e.getMessage());
             }
         }
     }
@@ -339,7 +343,7 @@ public class CameraInterface implements Camera.PreviewCallback {
             try {
                 this.mCamera.enableShutterSound(false);
             } catch (Exception e) {
-                e.printStackTrace();
+                LogUtil.e("enable shutter sound failed " + e.getMessage());
             }
         }
         LogUtil.i("open end");
@@ -390,7 +394,7 @@ public class CameraInterface implements Camera.PreviewCallback {
                 safeToTakePicture = true;
                 LogUtil.i("=== Start Preview ===");
             } catch (Exception e) {
-                e.printStackTrace();
+                LogUtil.e("start preview failed" + e.getMessage());
             }
         }
     }
@@ -408,7 +412,7 @@ public class CameraInterface implements Camera.PreviewCallback {
                 isPreviewing = false;
                 LogUtil.i("=== Stop Preview ===");
             } catch (Exception e) {
-                e.printStackTrace();
+                LogUtil.e("stop preview failed " + e.getMessage());
             }
         }
     }
@@ -431,11 +435,11 @@ public class CameraInterface implements Camera.PreviewCallback {
                 mCamera = null;
 //                destroyCameraInterface();
                 LogUtil.i("=== Destroy Camera ===");
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                LogUtil.e("destroy camera failed" + e.getMessage());
             }
         } else {
-            LogUtil.i( "=== Camera  Null===");
+            LogUtil.i("=== Camera  Null===");
         }
     }
 
@@ -488,23 +492,27 @@ public class CameraInterface implements Camera.PreviewCallback {
     public void startRecord(Surface surface, float screenProp) {
         final int nowAngle = (angle + 90) % 360;
         if (mCamera != null) {
-            mCamera.setPreviewCallback(null);
-            //获取第一帧图片
-            Camera.Parameters parameters = mCamera.getParameters();
-            int width = parameters.getPreviewSize().width;
-            int height = parameters.getPreviewSize().height;
-            YuvImage yuv = new YuvImage(firstFrame_data, parameters.getPreviewFormat(), width, height, null);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
-            byte[] bytes = out.toByteArray();
-            videoFirstFrame = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-            Matrix matrix = new Matrix();
-            if (SELECTED_CAMERA == CAMERA_POST_POSITION) {
-                matrix.setRotate(nowAngle);
-            } else if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
-                matrix.setRotate(270);
+            try {
+                mCamera.setPreviewCallback(null);
+                //获取第一帧图片
+                Camera.Parameters parameters = mCamera.getParameters();
+                int width = parameters.getPreviewSize().width;
+                int height = parameters.getPreviewSize().height;
+                YuvImage yuv = new YuvImage(firstFrame_data, parameters.getPreviewFormat(), width, height, null);
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+                byte[] bytes = out.toByteArray();
+                videoFirstFrame = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                Matrix matrix = new Matrix();
+                if (SELECTED_CAMERA == CAMERA_POST_POSITION) {
+                    matrix.setRotate(nowAngle);
+                } else if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
+                    matrix.setRotate(270);
+                }
+                videoFirstFrame = Bitmap.createBitmap(videoFirstFrame, 0, 0, videoFirstFrame.getWidth(), videoFirstFrame.getHeight(), matrix, true);
+            } catch (Exception e) {
+                LogUtil.e("failed to get video first frame " + e.getMessage());
             }
-            videoFirstFrame = Bitmap.createBitmap(videoFirstFrame, 0, 0, videoFirstFrame.getWidth(), videoFirstFrame.getHeight(), matrix, true);
         }
         if (isRecorder) {
             return;
@@ -519,15 +527,19 @@ public class CameraInterface implements Camera.PreviewCallback {
             mMediaRecorder.release();
             mMediaRecorder = null;
         }
-        if (mParams == null) {
-            mParams = mCamera.getParameters();
+        try {
+            if (mParams == null) {
+                mParams = mCamera.getParameters();
+            }
+            List<String> focusModes = mParams.getSupportedFocusModes();
+            if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+                mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+            }
+            mCamera.setParameters(mParams);
+            mCamera.unlock();
+        } catch (Exception e) {
+            LogUtil.e("camera getParameters failed " + e.getMessage());
         }
-        List<String> focusModes = mParams.getSupportedFocusModes();
-        if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
-            mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-        }
-        mCamera.setParameters(mParams);
-        mCamera.unlock();
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.reset();
         mMediaRecorder.setCamera(mCamera);
@@ -536,18 +548,18 @@ public class CameraInterface implements Camera.PreviewCallback {
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        Camera.Size videoSize;
-        if (mParams.getSupportedVideoSizes() == null) {
-            videoSize = CameraParamUtil.getInstance().getPreviewSize(mParams.getSupportedPreviewSizes(), 600,
-                    screenProp);
-        } else {
-            videoSize = CameraParamUtil.getInstance().getPreviewSize(mParams.getSupportedVideoSizes(), 600,
-                    screenProp);
-        }
-        if (videoSize.width == videoSize.height) {
-            mMediaRecorder.setVideoSize(preview_width, preview_height);
-        } else {
-            mMediaRecorder.setVideoSize(videoSize.width, videoSize.height);
+        if (mParams != null) {
+            Camera.Size videoSize;
+            if (mParams.getSupportedVideoSizes() == null) {
+                videoSize = CameraParamUtil.getInstance().getPreviewSize(mParams.getSupportedPreviewSizes(), 600, screenProp);
+            } else {
+                videoSize = CameraParamUtil.getInstance().getPreviewSize(mParams.getSupportedVideoSizes(), 600, screenProp);
+            }
+            if (videoSize.width == videoSize.height) {
+                mMediaRecorder.setVideoSize(preview_width, preview_height);
+            } else {
+                mMediaRecorder.setVideoSize(videoSize.width, videoSize.height);
+            }
         }
         if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
             //手机预览倒立的处理
@@ -609,15 +621,16 @@ public class CameraInterface implements Camera.PreviewCallback {
             try {
                 mMediaRecorder.stop();
             } catch (Exception e) {
+                LogUtil.e("MediaRecorder stop failed");
                 mMediaRecorder = null;
             } finally {
                 if (mMediaRecorder != null) {
                     mMediaRecorder.release();
+                    LogUtil.i("MediaRecorder release.");
                 }
                 mMediaRecorder = null;
                 isRecorder = false;
             }
-            LogUtil.i("MediaRecorder release.");
             if (isShort) {
                 if (FileUtil.deleteFile(videoFileAbsPath)) {
                     callback.recordResult(null, null);
@@ -652,20 +665,20 @@ public class CameraInterface implements Camera.PreviewCallback {
         if (mCamera == null) {
             return;
         }
-        final Camera.Parameters params = mCamera.getParameters();
-        Rect focusRect = calculateTapArea(x, y, context);
-        mCamera.cancelAutoFocus();
-        if (params.getMaxNumFocusAreas() > 0) {
-            List<Camera.Area> focusAreas = new ArrayList<>();
-            focusAreas.add(new Camera.Area(focusRect, 800));
-            params.setFocusAreas(focusAreas);
-        } else {
-            LogUtil.i("focus areas not supported");
-            callback.focusSuccess();
-            return;
-        }
-        final String currentFocusMode = params.getFocusMode();
         try {
+            final Camera.Parameters params = mCamera.getParameters();
+            Rect focusRect = calculateTapArea(x, y, context);
+            mCamera.cancelAutoFocus();
+            if (params.getMaxNumFocusAreas() > 0) {
+                List<Camera.Area> focusAreas = new ArrayList<>();
+                focusAreas.add(new Camera.Area(focusRect, 800));
+                params.setFocusAreas(focusAreas);
+            } else {
+                LogUtil.i("focus areas not supported");
+                callback.focusSuccess();
+                return;
+            }
+            final String currentFocusMode = params.getFocusMode();
             params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             mCamera.setParameters(params);
             mCamera.autoFocus(new Camera.AutoFocusCallback() {
