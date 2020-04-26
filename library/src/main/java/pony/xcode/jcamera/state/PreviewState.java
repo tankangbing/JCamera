@@ -5,6 +5,8 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 
+import androidx.annotation.Nullable;
+
 import pony.xcode.jcamera.CameraInterface;
 import pony.xcode.jcamera.JCameraView;
 import pony.xcode.jcamera.util.LogUtil;

@@ -20,6 +20,7 @@ public class JCameraConfig {
 
     private String savePath; //保存的路径
     private int mediaQuality; //录制质量
+    private boolean isVideoFirstFrameEnable;
     private int features; //设置CaptureButton功能（拍照和录像）
     private int minDuration; //最小录制时间
     private int maxDuration; //设置录制时间
@@ -27,6 +28,7 @@ public class JCameraConfig {
     private JCameraConfig(Builder builder) {
         this.savePath = builder.savePath;
         this.mediaQuality = builder.mediaQuality;
+        this.isVideoFirstFrameEnable = builder.isSaveVideoFirstFrame;
         this.features = builder.features;
         this.minDuration = builder.minDuration;
         this.maxDuration = builder.maxDuration;
@@ -38,6 +40,10 @@ public class JCameraConfig {
 
     int getMediaQuality() {
         return mediaQuality;
+    }
+
+    boolean isVideoFirstFrameEnable() {
+        return isVideoFirstFrameEnable;
     }
 
     int getFeatures() {
@@ -55,6 +61,7 @@ public class JCameraConfig {
     public static class Builder {
         private String savePath; //保存的路径
         private int mediaQuality = JCameraView.MEDIA_QUALITY_HIGH; //录制质量
+        private boolean isSaveVideoFirstFrame;
         private int features; //设置CaptureButton功能（拍照和录像）
         private int minDuration; //设置最小录制时间
         private int maxDuration; //设置录制时间
@@ -66,6 +73,11 @@ public class JCameraConfig {
 
         public Builder setMediaQuality(int mediaQuality) {
             this.mediaQuality = mediaQuality;
+            return this;
+        }
+
+        public Builder setVideoFirstFrameEnable(boolean enable) {
+            this.isSaveVideoFirstFrame = enable;
             return this;
         }
 

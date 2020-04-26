@@ -386,6 +386,11 @@ public class JCameraView extends FrameLayout implements CameraInterface.CameraOp
         CameraInterface.getInstance().setMediaQuality(quality);
     }
 
+    //设置是否获取视频第一帧bitmap
+    public void setVideoFirstFrameEnable(boolean enable) {
+        CameraInterface.getInstance().setVideoFirstFrameEnable(enable);
+    }
+
     @Override
     public void resetState(int type) {
         switch (type) {

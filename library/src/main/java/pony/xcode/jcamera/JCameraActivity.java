@@ -56,6 +56,7 @@ public class JCameraActivity extends AppCompatActivity implements JCameraListene
         if (config != null) {
             intent.putExtra("path", config.getSavePath());
             intent.putExtra("quality", config.getMediaQuality());
+            intent.putExtra("videoFrame", config.isVideoFirstFrameEnable());
             intent.putExtra("features", config.getFeatures());
             intent.putExtra("minDuration", config.getMinDuration());
             intent.putExtra("maxDuration", config.getMaxDuration());
@@ -104,6 +105,8 @@ public class JCameraActivity extends AppCompatActivity implements JCameraListene
             mediaQuality = JCameraView.MEDIA_QUALITY_HIGH;
         }
         mJCameraView.setMediaQuality(mediaQuality);
+        final boolean videoFirstFrameEnable = getIntent().getBooleanExtra("videoFrame", false);
+        mJCameraView.setVideoFirstFrameEnable(videoFirstFrameEnable);
         final int features = intent.getIntExtra("features", JCameraConfig.FEATURES);
         mJCameraView.setFeatures(features);
         final int minDuration = intent.getIntExtra("minDuration", JCameraConfig.DURATION_MIN);
