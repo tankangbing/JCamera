@@ -27,7 +27,6 @@ public class ReturnButton extends View {
     public ReturnButton(Context context, int size) {
         this(context);
         this.mButtonSize = size;
-
         mStrokeWidth = mButtonSize / 15f;
         int color = JCameraConfig.BACKTRACK_COLOR;
         Resources.Theme theme = context.getTheme();
@@ -38,9 +37,6 @@ public class ReturnButton extends View {
             }
             if (theme.resolveAttribute(R.attr.jc_backtrack_line_width, tv, true)) {
                 mStrokeWidth = context.getResources().getDimensionPixelSize(tv.resourceId);
-            }
-            if (theme.resolveAttribute(R.attr.jc_backtrack_size, tv, true)) {
-                this.mButtonSize = context.getResources().getDimensionPixelSize(tv.resourceId);
             }
         }
 

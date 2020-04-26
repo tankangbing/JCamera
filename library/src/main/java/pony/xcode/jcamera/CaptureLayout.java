@@ -39,9 +39,9 @@ public class CaptureLayout extends FrameLayout {
     private CaptureButton mCaptureBtn;      //拍照按钮
     private TypeButton mConfirmBtn;         //确认按钮
     private TypeButton mCancelBtn;          //取消按钮
-    private ReturnButton mReturnBtn;        //返回按钮
-    private ImageView mCustomLeftIView;            //左边自定义按钮
-    private ImageView mCustomRightIView;            //右边自定义按钮
+    private View mReturnBtn;        //返回按钮
+    //    private ImageView mCustomLeftIView;            //左边自定义按钮
+//    private ImageView mCustomRightIView;            //右边自定义按钮
     private TextView mTipTextView;               //提示文本
     private int mTipTextColor = 0xFFFFFFFF;
     private int mTipTextSize;
@@ -53,8 +53,8 @@ public class CaptureLayout extends FrameLayout {
     private int mLayoutWidth;
     private int mLayoutHeight;
     private int mButtonSize;
-    private int mIconLeft = 0;
-    private int mIconRight = 0;
+//    private int mIconLeft = 0;
+//    private int mIconRight = 0;
 
     private boolean isFirst = true;
 
@@ -117,19 +117,14 @@ public class CaptureLayout extends FrameLayout {
 
     public void initEvent() {
         //默认TypeButton为隐藏
-        mCustomRightIView.setVisibility(GONE);
+//        mCustomRightIView.setVisibility(GONE);
         mCancelBtn.setVisibility(GONE);
         mConfirmBtn.setVisibility(GONE);
     }
 
     public void startTypeBtnAnimator() {
         //拍照录制结果后的动画
-        if (this.mIconLeft != 0)
-            mCustomLeftIView.setVisibility(GONE);
-        else
-            mReturnBtn.setVisibility(GONE);
-        if (this.mIconRight != 0)
-            mCustomRightIView.setVisibility(GONE);
+        mReturnBtn.setVisibility(GONE);
         mCaptureBtn.setVisibility(GONE);
         mCancelBtn.setVisibility(VISIBLE);
         mConfirmBtn.setVisibility(VISIBLE);
@@ -236,24 +231,26 @@ public class CaptureLayout extends FrameLayout {
         });
 
         //返回按钮
-        mReturnBtn = new ReturnButton(context, (int) (mButtonSize / 2.5f));
-        LayoutParams mReturnParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        mReturnParams.gravity = Gravity.CENTER_VERTICAL;
-        mReturnParams.setMargins(mLayoutWidth / 6, 0, 0, 0);
-        mReturnBtn.setLayoutParams(mReturnParams);
-        //左边自定义按钮
-        mCustomLeftIView = new ImageView(context);
-        LayoutParams customLeftParams = new LayoutParams((int) (mButtonSize / 2.5f), (int) (mButtonSize / 2.5f));
-        customLeftParams.gravity = Gravity.CENTER_VERTICAL;
-        customLeftParams.setMargins(mLayoutWidth / 6, 0, 0, 0);
-        mCustomLeftIView.setLayoutParams(customLeftParams);
-
-        //右边自定义按钮
-        mCustomRightIView = new ImageView(context);
-        LayoutParams customRightParams = new LayoutParams((int) (mButtonSize / 2.5f), (int) (mButtonSize / 2.5f));
-        customRightParams.gravity = Gravity.CENTER_VERTICAL | Gravity.END;
-        customRightParams.setMargins(0, 0, mLayoutWidth / 6, 0);
-        mCustomRightIView.setLayoutParams(customRightParams);
+        int backButtonSize = (int) (mButtonSize / 2.5f);
+        Resources.Theme theme = context.getTheme();
+        if (theme != null) {
+            TypedValue typedValue = new TypedValue();
+            if (theme.resolveAttribute(R.attr.jc_backtrack_icon, typedValue, true)) {
+                ImageView backView = new ImageView(context);
+                backView.setImageResource(typedValue.resourceId);
+                mReturnBtn = backView;
+            }
+            if (theme.resolveAttribute(R.attr.jc_backtrack_size, typedValue, true)) {
+                backButtonSize = context.getResources().getDimensionPixelSize(typedValue.resourceId);
+            }
+        }
+        if (mReturnBtn == null) {
+            mReturnBtn = new ReturnButton(context, backButtonSize);
+        }
+        LayoutParams returnParams = new LayoutParams(backButtonSize, backButtonSize);
+        returnParams.gravity = Gravity.CENTER_VERTICAL;
+        returnParams.setMargins(mLayoutWidth / 6, 0, 0, 0);
+        mReturnBtn.setLayoutParams(returnParams);
 
         mTipTextView = new TextView(context);
         LayoutParams tipTxtParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
@@ -269,18 +266,8 @@ public class CaptureLayout extends FrameLayout {
         this.addView(mCancelBtn);
         this.addView(mConfirmBtn);
         this.addView(mReturnBtn);
-        this.addView(mCustomLeftIView);
-        this.addView(mCustomRightIView);
         this.addView(mTipTextView);
 
-    }
-
-    public void setLeftClickListener(View.OnClickListener l) {
-        mCustomLeftIView.setOnClickListener(l);
-    }
-
-    public void setRightClickListener(View.OnClickListener l) {
-        mCustomRightIView.setOnClickListener(l);
     }
 
     public void setReturnListener(View.OnClickListener l) {
@@ -295,14 +282,7 @@ public class CaptureLayout extends FrameLayout {
         mCancelBtn.setVisibility(GONE);
         mConfirmBtn.setVisibility(GONE);
         mCaptureBtn.setVisibility(VISIBLE);
-        if (this.mIconLeft != 0)
-            mCustomLeftIView.setVisibility(VISIBLE);
-        else
-            mReturnBtn.setVisibility(VISIBLE);
-        if (this.mIconRight != 0)
-            mCustomRightIView.setVisibility(VISIBLE);
     }
-
 
     public void startAlphaAnimation() {
         if (isFirst) {
@@ -348,24 +328,5 @@ public class CaptureLayout extends FrameLayout {
 
     public void setTip(String tip) {
         mTipTextView.setText(tip);
-    }
-
-    public void setIconSrc(int iconLeft, int iconRight) {
-        this.mIconLeft = iconLeft;
-        this.mIconRight = iconRight;
-        if (this.mIconLeft != 0) {
-            mCustomLeftIView.setImageResource(iconLeft);
-            mCustomLeftIView.setVisibility(VISIBLE);
-            mReturnBtn.setVisibility(GONE);
-        } else {
-            mCustomLeftIView.setVisibility(GONE);
-            mReturnBtn.setVisibility(VISIBLE);
-        }
-        if (this.mIconRight != 0) {
-            mCustomRightIView.setImageResource(iconRight);
-            mCustomRightIView.setVisibility(VISIBLE);
-        } else {
-            mCustomRightIView.setVisibility(GONE);
-        }
     }
 }

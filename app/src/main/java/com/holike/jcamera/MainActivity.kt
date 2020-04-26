@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
                     .config(JCameraConfig.Builder()
                             .setFeatures(JCameraView.BUTTON_STATE_ONLY_RECORDER)
                             .build())
-                    .themeId(R.style.JCameraTheme)
+                    .themeId(R.style.AppTheme)
                     .requestCode(10086).start()
         }
     }

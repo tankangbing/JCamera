@@ -11,9 +11,7 @@
         <item name="jc_confirm_icon_color">@color/jc_confirm_icon_col</item>
     </style>
 
-    <attr name="jc_iconSrc" format="reference" />
-    <attr name="jc_iconLeft" format="reference" />
-    <attr name="jc_iconRight" format="reference" />
+    <attr name="jc_iconCamera" format="reference" />
     <attr name="jc_duration_min" format="integer" />
     <attr name="jc_duration_max" format="integer" />
 
@@ -31,6 +29,7 @@
     <attr name="jc_confirm_icon_color" format="color" />
 
     <!--ReturnButton style-->
+    <attr name="jc_backtrack_icon" format="reference" />
     <attr name="jc_backtrack_color" format="color" />
     <attr name="jc_backtrack_line_width" format="dimension" />
     <attr name="jc_backtrack_size" format="dimension" />
@@ -51,9 +50,7 @@
     <attr name="jc_vector_icon_size" format="dimension" />
 
     <declare-styleable name="JCameraView">
-        <attr name="jc_iconSrc" />
-        <attr name="jc_iconLeft" />
-        <attr name="jc_iconRight" />
+        <attr name="jc_iconCamera" />
         <attr name="jc_duration_min" />
         <attr name="jc_duration_max" />
     </declare-styleable>

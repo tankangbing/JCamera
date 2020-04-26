@@ -6,6 +6,9 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="jc_backtrack_icon">@drawable/ic_launcher_background</item>
+        <item name="jc_backtrack_size">@dimen/dp_50</item>
     </style>
 
+    <dimen name="dp_50">50dp</dimen>
 </resources>
