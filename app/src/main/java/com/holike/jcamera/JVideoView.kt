@@ -18,5 +18,6 @@ class JVideoView : VideoView {
         val width = getDefaultSize(0, widthMeasureSpec)
         val height = getDefaultSize(0, heightMeasureSpec)
         setMeasuredDimension(width, height)
+        //int
     }
 }
