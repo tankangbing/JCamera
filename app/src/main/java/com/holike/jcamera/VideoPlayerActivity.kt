@@ -28,6 +28,10 @@ class VideoPlayerActivity : AppCompatActivity() {
             }
             mp.start()
         }
+        videoView.setOnCompletionListener { m ->
+            m.stop()
+            finish()
+        }
     }
 
     private fun updateVideoViewSize(videoWidth: Int, videoHeight: Int) {

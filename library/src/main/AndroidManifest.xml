@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application>
-        <activity android:name=".JCameraActivity" />
+        <activity android:name=".JCameraActivity"
+           android:launchMode="singleTask"/>
     </application>
 </manifest>
